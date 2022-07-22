@@ -31,6 +31,8 @@ import java.io.File;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import edu.illinois.nondex.common.ConfigurationDefaults;
+
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
@@ -39,6 +41,9 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
     private final TestFrameworkTemplate frameworkTemplate;
+
+    protected int numRuns;
+    protected int seed;
 
     private RoundResult lastResult;
 
@@ -51,6 +56,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         Set<File> testClassesDir,
         Set<File> resolvedClasspath
     ) {
+        this.numRuns = new Integer(System.getProperty(ConfigurationDefaults.PROPERTY_NUM_RUNS, ConfigurationDefaults.DEFAULT_NUM_RUNS_STR));
+        this.seed = new Integer(System.getProperty(ConfigurationDefaults.PROPERTY_SEED, ConfigurationDefaults.DEFAULT_SEED_STR));
         this.extension = extension;
         this.delegate = delegate;
         this.testTask = task;
