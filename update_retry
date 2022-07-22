@@ -1,0 +1,8 @@
+jar_dir=/home/xinyuwu4/.m2/repository/org/gradle/test-retry-gradle-plugin
+rm -rf ${jar_dir}/* #To remove all the contents of the folder (including all interior folders) but not the folder itself
+
+# publish new build to mavenLocal
+cd /home/xinyuwu4/nondexes/test-retry-gradle-plugin
+./gradlew publishToMavenLocal
+
+ver=./gradlew publishToMavenLocal | grep version | grep -o '[[:digit:]].*$'

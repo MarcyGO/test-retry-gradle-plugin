@@ -30,6 +30,19 @@ import org.gradle.testretry.internal.filter.RetryFilter;
 import java.io.File;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Collection;
+import org.gradle.process.JavaForkOptions;
+
+import edu.illinois.nondex.common.ConfigurationDefaults;
+import edu.illinois.nondex.common.Configuration;
+import edu.illinois.nondex.common.Utils;
+import edu.illinois.nondex.common.Level;
+import edu.illinois.nondex.common.Logger;
+import edu.illinois.nondex.instr.Main;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
@@ -40,17 +53,30 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     private final Test testTask;
     private final TestFrameworkTemplate frameworkTemplate;
 
+    // counterpart for parameters in AbstractNonDexMojo; interfacing with argline
+    protected int numRuns; // as int or string??
+    protected int seed;
+    // baseDir?
+    // maybe I should put a configuration type here? no
+
+    private List<NonDexExecution> executions = new LinkedList<>();
+
     private RoundResult lastResult;
 
     public RetryTestExecuter(
         Test task,
         TestRetryTaskExtensionAdapter extension,
+        // there is a TestExecuter inside RetryTestExecuter
+        // TestExecuter is an interface
         TestExecuter<JvmTestExecutionSpec> delegate,
         Instantiator instantiator,
         ObjectFactory objectFactory,
         Set<File> testClassesDir,
         Set<File> resolvedClasspath
     ) {
+        // read from argline
+        this.numRuns = new Integer(System.getProperty(ConfigurationDefaults.PROPERTY_NUM_RUNS, ConfigurationDefaults.DEFAULT_NUM_RUNS_STR));
+        this.seed = new Integer(System.getProperty(ConfigurationDefaults.PROPERTY_SEED, ConfigurationDefaults.DEFAULT_SEED_STR));
         this.extension = extension;
         this.delegate = delegate;
         this.testTask = task;
@@ -64,16 +90,19 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     }
 
     @Override
+    // executeTests() > TestExecuter.execute()
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
-        int maxRetries = extension.getMaxRetries();
+        int maxRetries = extension.getMaxRetries();     // TestRetryTaskExtensionAdapter configuration
         int maxFailures = extension.getMaxFailures();
         boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
 
+        // execute the test once, no retry
         if (maxRetries <= 0) {
-            delegate.execute(spec, testResultProcessor);
+            delegate.execute(spec, testResultProcessor);    // TestExecuter<JvmTestExecutionSpec> Test also has DefaultTestExecuter
             return;
         }
 
+        // the current
         TestFrameworkStrategy testFrameworkStrategy = TestFrameworkStrategy.of(spec.getTestFramework());
 
         RetryFilter filter = new RetryFilter(
@@ -93,30 +122,78 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         );
 
         int retryCount = 0;
+        // original spec
         JvmTestExecutionSpec testExecutionSpec = spec;
+        System.out.println("begin the for loop");
+        CleanExecution cleanExec = new CleanExecution(delegate, spec, retryTestResultProcessor, 
+            System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
+        cleanExec.run();
 
-        while (true) {
-            delegate.execute(testExecutionSpec, retryTestResultProcessor);
-            RoundResult result = retryTestResultProcessor.getResult();
-            lastResult = result;
-
-            if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
-                // fall through to our doLast action to fail accordingly
-                testTask.setIgnoreFailures(true);
-                break;
-            } else if (result.failedTests.isEmpty()) {
-                if (retryCount > 0 && !result.hasRetryFilteredFailures && !failOnPassedAfterRetry) {
-                    testTask.setIgnoreFailures(true);
-                }
-                break;
-            } else if (result.lastRound) {
-                break;
-            } else {
-                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, result.failedTests);
-                testExecutionSpec = createRetryJvmExecutionSpec(spec, retryTestFramework);
-                retryTestResultProcessor.reset(++retryCount == maxRetries);
-            }
+        for (int i = 0; i < numRuns; i++) {
+            // put argline parameters into the constructer
+            NonDexExecution execution = new NonDexExecution(computeIthSeed(i),
+                delegate, spec, retryTestResultProcessor, 
+                System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
+            this.executions.add(execution);
+            execution.run();
         }
+        // int i = 0;
+        // while (i<numRuns) {
+        //     System.out.println("execute the test " + i);
+        //     delegate.execute(testExecutionSpec, retryTestResultProcessor);
+            
+        //     RoundResult result = retryTestResultProcessor.getResult();
+        //     lastResult = result;
+        //     if (result.failedTests.isEmpty()) System.out.println("no test fail in this run");
+        //     System.out.println("\n \n");
+        //     // something like "5 tests completed, 3 failed" is printed at the end before the following
+        //     if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
+        //         // fall through to our doLast action to fail accordingly
+        //         testTask.setIgnoreFailures(true);
+        //         break;
+        //     // delete some condition check so it will run test even if it pass at the first time
+        //     } else {
+        //         testExecutionSpec = createRetryJvmExecutionSpec(i, this.seed, spec);
+        //         // what is this processor?
+        //         retryTestResultProcessor.reset(++retryCount == maxRetries);
+        //         i++;
+        //     }
+        // }
+        // to do: postProcessExecutions: filter these fail in clean execution
+        // to do: printSummary
+        this.postProcessExecutions(cleanExec);
+        Configuration config = this.executions.get(0).getConfiguration();
+        this.printSummary(cleanExec, config);
+    }
+
+    private void postProcessExecutions(CleanExecution cleanExec) {
+        Collection<String> failedInClean = cleanExec.getConfiguration().getFailedTests();
+        for (NonDexExecution exec : this.executions) {
+            exec.getConfiguration().filterTests(failedInClean);
+        }
+    }
+
+    private void printSummary(CleanExecution cleanExec, Configuration config) {
+        Set<String> allFailures = new LinkedHashSet<>();
+        Logger.getGlobal().log(Level.INFO, "NonDex SUMMARY:");  // what is this log?
+        for (CleanExecution exec : this.executions) {
+            // this.printExecutionResults(allFailures, exec);
+        }
+
+        if (!cleanExec.getConfiguration().getFailedTests().isEmpty()) {
+            Logger.getGlobal().log(Level.INFO, "Tests are failing without NonDex.");
+            // this.printExecutionResults(allFailures, cleanExec);
+        }
+        allFailures.removeAll(cleanExec.getConfiguration().getFailedTests());
+
+        Logger.getGlobal().log(Level.INFO, "Across all seeds:");
+        for (String test : allFailures) {
+            Logger.getGlobal().log(Level.INFO, test);
+        }
+    }
+
+    private int computeIthSeed(int ithSeed) {
+        return Utils.computeIthSeed(ithSeed, false, this.seed); // hardcode rerun to false
     }
 
     public void failWithNonRetriedTestsIfAny() {
@@ -132,11 +209,26 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         return lastResult != null && !lastResult.nonRetriedTests.isEmpty();
     }
 
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, TestFramework retryTestFramework) {
+    public JvmTestExecutionSpec createRetryJvmExecutionSpec(int i, int seed, JvmTestExecutionSpec spec) {
+        // construct a same spec, only change the framework
+        // why we need to change the framework for each run?
+        // what is changed inside?
+        // to do: use a method to find the path
+        String commonPath = "/home/xinyuwu4/.m2/repository/edu/illinois/nondex-common/1.1.3-SNAPSHOT/nondex-common-1.1.3-SNAPSHOT.jar";
+        String outPath = System.getProperty("user.dir") + File.separator + "out.jar";
+        String args = "-Xbootclasspath/p:" + outPath + File.pathSeparator + commonPath;
+        // maybe I can put this somewhere inside
+        // set jvmArgs at test execution?
+        String setExecutionId = "-D" + ConfigurationDefaults.PROPERTY_EXECUTION_ID + "=" + Utils.getFreshExecutionId();
+        String setSeed = "-D" + ConfigurationDefaults.PROPERTY_SEED + "=" + Utils.computeIthSeed(i,false,seed);
+
+        JavaForkOptions option = spec.getJavaForkOptions();
+        List<String> arg = Arrays.asList(setExecutionId, args, setSeed);
+        option.setJvmArgs(arg);
         if (gradleVersionIsAtLeast("6.4")) {
             // This constructor is in Gradle 6.4+
             return new JvmTestExecutionSpec(
-                retryTestFramework,
+                spec.getTestFramework(),
                 spec.getClasspath(),
                 spec.getModulePath(),
                 spec.getCandidateClassFiles(),
@@ -145,14 +237,14 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 spec.getPath(),
                 spec.getIdentityPath(),
                 spec.getForkEvery(),
-                spec.getJavaForkOptions(),
+                option,
                 spec.getMaxParallelForks(),
                 spec.getPreviousFailedTestClasses()
             );
         } else {
             // This constructor is in Gradle 4.7+
             return new JvmTestExecutionSpec(
-                retryTestFramework,
+                spec.getTestFramework(),
                 spec.getClasspath(),
                 spec.getCandidateClassFiles(),
                 spec.isScanForTestClasses(),
@@ -160,7 +252,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 spec.getPath(),
                 spec.getIdentityPath(),
                 spec.getForkEvery(),
-                spec.getJavaForkOptions(),
+                option,
                 spec.getMaxParallelForks(),
                 spec.getPreviousFailedTestClasses()
             );

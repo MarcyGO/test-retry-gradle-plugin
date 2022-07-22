@@ -169,9 +169,11 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     private boolean lastRun() {
-        return currentRoundFailedTests.isEmpty()
-            || lastRetry
-            || currentRoundFailedTestsExceedsMaxFailures();
+        // check whether this is the last run
+        // return currentRoundFailedTests.isEmpty()
+        //     || lastRetry
+        //     || currentRoundFailedTestsExceedsMaxFailures();
+        return false;
     }
 
     private boolean currentRoundFailedTestsExceedsMaxFailures() {
@@ -187,7 +189,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             throw new IllegalStateException("processor has completed");
         }
 
-        this.lastRetry = lastRetry;
+        this.lastRetry = lastRetry;  // mark whether the retry time reach the maximum
         this.previousRoundFailedTests = currentRoundFailedTests;
         this.currentRoundFailedTests = new TestNames();
         this.activeDescriptorsById.clear();

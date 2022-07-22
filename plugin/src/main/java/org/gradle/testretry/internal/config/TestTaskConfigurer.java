@@ -34,18 +34,25 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import edu.illinois.nondex.common.ConfigurationDefaults;
+import edu.illinois.nondex.common.Utils;
+import edu.illinois.nondex.instr.Main;
+import java.io.File;
+
 public final class TestTaskConfigurer {
 
     private TestTaskConfigurer() {
     }
 
     public static void configureTestTask(Test test, ObjectFactory objectFactory, ProviderFactory providerFactory) {
+        System.out.println("configureTestTask");
         VersionNumber gradleVersion = VersionNumber.parse(test.getProject().getGradle().getGradleVersion());
 
         TestRetryTaskExtension extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
 
         TestRetryTaskExtensionAdapter adapter = new TestRetryTaskExtensionAdapter(providerFactory, extension, gradleVersion);
 
+        // what's getInputs?
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         Provider<Boolean> isDeactivatedByTestDistributionPlugin =
@@ -54,6 +61,7 @@ public final class TestTaskConfigurer {
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
 
+        // add action
         test.doFirst(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new InitTaskAction(adapter, objectFactory)));
         test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction()));
     }
@@ -98,6 +106,7 @@ public final class TestTaskConfigurer {
     }
 
     private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
+        // create a testExecuter
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
         return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory, task.getTestClassesDirs().getFiles(), task.getClasspath().getFiles());
@@ -135,6 +144,7 @@ public final class TestTaskConfigurer {
 
         @Override
         public void execute(@NotNull Test task) {
+            System.out.println("execute FinalizeTaskAction");
             TestExecuter<JvmTestExecutionSpec> testExecuter = getTestExecuter(task);
             if (testExecuter instanceof RetryTestExecuter) {
                 ((RetryTestExecuter) testExecuter).failWithNonRetriedTestsIfAny();
@@ -144,18 +154,23 @@ public final class TestTaskConfigurer {
         }
     }
 
+    // initialize?
     private static class InitTaskAction implements Action<Test> {
 
         private final TestRetryTaskExtensionAdapter adapter;
         private final ObjectFactory objectFactory;
 
+        // it is not part of the action, but is before it, to configure it, to construct it
+        // maybe set nondexSeed here?
         public InitTaskAction(TestRetryTaskExtensionAdapter adapter, ObjectFactory objectFactory) {
+            System.out.println("InitTaskAction");
             this.adapter = adapter;
             this.objectFactory = objectFactory;
         }
 
         @Override
         public void execute(@NotNull Test task) {
+            System.out.println("execute InitTaskAction");
             RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter, objectFactory);
             setTestExecuter(task, retryTestExecuter);
         }

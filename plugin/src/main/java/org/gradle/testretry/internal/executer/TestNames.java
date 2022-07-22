@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 public final class TestNames {
 
-    private final Map<String, Set<String>> map = new HashMap<>();
+    public final Map<String, Set<String>> map = new HashMap<>();
 
     public void add(String className, String testName) {
         map.computeIfAbsent(className, ignored -> new HashSet<>()).add(testName);
