@@ -111,11 +111,6 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 // fall through to our doLast action to fail accordingly
                 testTask.setIgnoreFailures(true);
                 break;
-            } else if (result.failedTests.isEmpty()) {
-                if (retryCount > 0 && !result.hasRetryFilteredFailures && !failOnPassedAfterRetry) {
-                    testTask.setIgnoreFailures(true);
-                }
-                break;
             } else if (result.lastRound) {
                 break;
             } else {
