@@ -26,12 +26,20 @@ import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
+import org.gradle.api.internal.artifacts.mvnsettings.DefaultMavenFileLocations;
+import org.gradle.process.JavaForkOptions;
 
 import java.io.File;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.nio.file.Paths;
 
 import edu.illinois.nondex.common.ConfigurationDefaults;
+import edu.illinois.nondex.common.Level;
+import edu.illinois.nondex.common.Logger;
+import edu.illinois.nondex.common.Utils;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
@@ -72,7 +80,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
-        int maxRetries = extension.getMaxRetries();
+        int maxRetries = this.numRuns;
         int maxFailures = extension.getMaxFailures();
         boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
 
@@ -103,6 +111,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         JvmTestExecutionSpec testExecutionSpec = spec;
 
         while (true) {
+            Logger.getGlobal().log(Level.INFO, "\n \n retryCount = " + retryCount);
             delegate.execute(testExecutionSpec, retryTestResultProcessor);
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
@@ -115,7 +124,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 break;
             } else {
                 TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, result.failedTests);
-                testExecutionSpec = createRetryJvmExecutionSpec(spec, retryTestFramework);
+                testExecutionSpec = createRetryJvmExecutionSpec(retryCount, spec, retryTestFramework);
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
         }
@@ -134,7 +143,10 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         return lastResult != null && !lastResult.nonRetriedTests.isEmpty();
     }
 
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, TestFramework retryTestFramework) {
+    private JvmTestExecutionSpec createRetryJvmExecutionSpec(int i, JvmTestExecutionSpec spec, TestFramework retryTestFramework) {
+        JavaForkOptions option = spec.getJavaForkOptions();
+        List<String> arg = this.setupArgline(i);
+        option.setJvmArgs(arg);
         if (gradleVersionIsAtLeast("6.4")) {
             // This constructor is in Gradle 6.4+
             return new JvmTestExecutionSpec(
@@ -147,7 +159,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 spec.getPath(),
                 spec.getIdentityPath(),
                 spec.getForkEvery(),
-                spec.getJavaForkOptions(),
+                option,
                 spec.getMaxParallelForks(),
                 spec.getPreviousFailedTestClasses()
             );
@@ -162,7 +174,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 spec.getPath(),
                 spec.getIdentityPath(),
                 spec.getForkEvery(),
-                spec.getJavaForkOptions(),
+                option,
                 spec.getMaxParallelForks(),
                 spec.getPreviousFailedTestClasses()
             );
@@ -172,5 +184,37 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     @Override
     public void stopNow() {
         delegate.stopNow();
+    }
+
+    private String getPathToNondexJar() {
+        // to do: use default name of instr jar; nondexjar should be get from configuration; instr jar should be in .nondex
+        String outPath = System.getProperty("user.dir") + File.separator + ".nondex" + File.separator + "out.jar";
+        DefaultMavenFileLocations loc = new DefaultMavenFileLocations();
+        File mvnLoc = loc.getUserMavenDir();
+        String result = outPath
+            + File.pathSeparator + Paths.get(mvnLoc.toString(), "repository", "edu", "illinois", "nondex-common", ConfigurationDefaults.VERSION,
+                              "nondex-common-" + ConfigurationDefaults.VERSION + ".jar");
+        return result;
+    }
+
+    private List<String> setupArgline(int i) {
+        String pathToNondex = getPathToNondexJar();
+        List<String> arg = new ArrayList();
+        if (!Utils.checkJDKBefore8()) {
+            arg.add("--patch-module=java.base=" + pathToNondex);
+            arg.add("--add-exports=java.base/edu.illinois.nondex.common=ALL-UNNAMED");
+            arg.add("--add-exports=java.base/edu.illinois.nondex.shuffling=ALL-UNNAMED");
+        } else {
+            arg.add("-Xbootclasspath/p:" + pathToNondex);
+        }
+
+        // to do: use configuration
+        arg.add("-D" + ConfigurationDefaults.PROPERTY_EXECUTION_ID + "=" + Utils.getFreshExecutionId());
+        arg.add("-D" + ConfigurationDefaults.PROPERTY_SEED + "=" + this.computeIthSeed(i));
+        return arg;
+    }
+
+    private int computeIthSeed(int ithSeed) {
+        return Utils.computeIthSeed(ithSeed, false, this.seed); // hardcode rerun to false
     }
 }
