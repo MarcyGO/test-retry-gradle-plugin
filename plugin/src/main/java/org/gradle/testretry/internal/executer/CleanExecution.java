@@ -2,22 +2,14 @@ package org.gradle.testretry.internal.executer;
 
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
-<<<<<<< HEAD
-=======
-import org.gradle.api.internal.tasks.testing.TestResultProcessor;
-import java.util.Set;
->>>>>>> 750be90 (some working stuffs)
 
 import edu.illinois.nondex.common.Configuration;
 import edu.illinois.nondex.common.Utils;
 import edu.illinois.nondex.common.Logger;
 import edu.illinois.nondex.common.Level;
 
-<<<<<<< HEAD
 import java.util.Set;
 
-=======
->>>>>>> 750be90 (some working stuffs)
 public class CleanExecution {
 
     protected Configuration configuration;
