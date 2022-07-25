@@ -2,8 +2,6 @@ package org.gradle.testretry.internal.executer;
 
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
-import org.gradle.api.internal.tasks.testing.TestResultProcessor;
-import java.util.Set;
 
 import edu.illinois.nondex.common.Configuration;
 import edu.illinois.nondex.common.Utils;
@@ -43,13 +41,12 @@ public class CleanExecution {
     }
 
     public RetryTestResultProcessor run() {
-        System.out.println("run");
-        updateSpec();
         Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
         delegate.execute(this.originalSpec, this.testResultProcessor);
         RoundResult result = testResultProcessor.getResult();
-        if (result.failedTests.isEmpty()) System.out.println("no test fail in this run");
-        else {
+        if (result.failedTests.isEmpty()) {
+            System.out.println("no test fail in this run");
+        } else {
             Logger.getGlobal().log(Level.INFO, "Failed when running tests for " + this.configuration.executionId);
         }
         return this.testResultProcessor;
