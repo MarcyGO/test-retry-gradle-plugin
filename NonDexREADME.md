@@ -24,8 +24,6 @@ Usage:
 3. Run NonDex on your project:
     ```
     ./gradlew test
-    ···
 4. You can also add parameters:
     ```
     ./gradlew test -DnondexRuns=10 -DnondexSeed=1234
-    ···
