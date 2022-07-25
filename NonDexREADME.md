@@ -25,7 +25,7 @@ Usage:
 3. Run NonDex on your project with default parameters nondexRuns=3, nondexSeed=933178:
     ```
     ./gradlew test
-4. You can also add parameters:
+4. You can also set the parameters:
     ```
     ./gradlew test -DnondexRuns=10 -DnondexSeed=1234
 5. Note: the first test run is without nondex shuffling.
