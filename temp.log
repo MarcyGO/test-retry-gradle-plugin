@@ -1,0 +1,40 @@
+Configuration on demand is an incubating feature.
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy UP-TO-DATE
+> Task :buildSrc:processResources NO-SOURCE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+> Task :buildSrc:assemble UP-TO-DATE
+> Task :buildSrc:compileTestJava NO-SOURCE
+> Task :buildSrc:compileTestGroovy NO-SOURCE
+> Task :buildSrc:processTestResources NO-SOURCE
+> Task :buildSrc:testClasses UP-TO-DATE
+> Task :buildSrc:test NO-SOURCE
+> Task :buildSrc:check UP-TO-DATE
+> Task :buildSrc:build UP-TO-DATE
+
+> Configure project :plugin
+Inferred project: test-retry-plugin, version: 1.5.0-dev.13.uncommitted+nondex.81eb770
+
+> Task :plugin:pluginDescriptors UP-TO-DATE
+> Task :plugin:processResources UP-TO-DATE
+> Task :plugin:generatePomFileForPluginMavenPublication
+> Task :plugin:generatePomFileForPluginPublication
+> Task :plugin:generatePomFileForTestRetryPluginMarkerMavenPublication
+> Task :plugin:publishTestRetryPluginMarkerMavenPublicationToMavenLocal
+> Task :plugin:compileKotlin
+
+> Task :plugin:compileJava
+
+> Task :plugin:compileGroovy NO-SOURCE
+> Task :plugin:classes
+> Task :plugin:shadowJar
+> Task :plugin:generateMetadataFileForPluginMavenPublication
+> Task :plugin:publishPluginMavenPublicationToMavenLocal
+> Task :plugin:publishPluginPublicationToMavenLocal
+> Task :plugin:publishToMavenLocal
+
+BUILD SUCCESSFUL in 3s
+14 actionable tasks: 10 executed, 4 up-to-date
+
+A build scan was not published as you have not authenticated with server 'ge.gradle.org'.

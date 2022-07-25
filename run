@@ -1,0 +1,6 @@
+./gradlew publishToMavenLocal > temp.log
+grep "BUILD SUCCESSFUL" temp.log
+if [ $? == 0 ]; then
+    cd /home/xinyuwu4/simple_project
+    ./cht pass retry test
+fi
