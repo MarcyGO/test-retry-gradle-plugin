@@ -111,7 +111,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         JvmTestExecutionSpec testExecutionSpec = spec;
 
         while (true) {
-            Logger.getGlobal().log(Level.INFO, "\n \n retryCount = " + retryCount);
+            Logger.getGlobal().log(Level.INFO, "retryCount = " + retryCount);
             delegate.execute(testExecutionSpec, retryTestResultProcessor);
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
