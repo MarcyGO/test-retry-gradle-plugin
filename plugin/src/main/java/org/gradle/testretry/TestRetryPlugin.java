@@ -49,13 +49,6 @@ public class TestRetryPlugin implements Plugin<Project> {
         project.getTasks()
             .withType(Test.class)
             .configureEach(task -> configureTestTask(task, objectFactory, providerFactory));
-        
-        String outPath = System.getProperty("user.dir") + File.separator + ".nondex" + File.separator + "out.jar";
-        try {
-            Main.main(outPath);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private static boolean pluginAlreadyApplied(Project project) {

@@ -40,6 +40,7 @@ import edu.illinois.nondex.common.ConfigurationDefaults;
 import edu.illinois.nondex.common.Level;
 import edu.illinois.nondex.common.Logger;
 import edu.illinois.nondex.common.Utils;
+import edu.illinois.nondex.instr.Main;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
@@ -80,6 +81,15 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
+        String outPath = System.getProperty("user.dir")+ File.separator
+            + ConfigurationDefaults.PROPERTY_NONDEX_JAR_DIR + File.separator
+            + ConfigurationDefaults.INSTRUMENTATION_JAR;
+        try {
+            Main.main(outPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         int maxRetries = this.numRuns;
         int maxFailures = extension.getMaxFailures();
         boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
@@ -188,12 +198,14 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     private String getPathToNondexJar() {
         // to do: use default name of instr jar; nondexjar should be get from configuration; instr jar should be in .nondex
-        String outPath = System.getProperty("user.dir") + File.separator + ".nondex" + File.separator + "out.jar";
+        String outPath = System.getProperty("user.dir")+ File.separator
+            + ConfigurationDefaults.PROPERTY_NONDEX_JAR_DIR + File.separator
+            + ConfigurationDefaults.INSTRUMENTATION_JAR;
         DefaultMavenFileLocations loc = new DefaultMavenFileLocations();
         File mvnLoc = loc.getUserMavenDir();
-        String result = outPath
-            + File.pathSeparator + Paths.get(mvnLoc.toString(), "repository", "edu", "illinois", "nondex-common", ConfigurationDefaults.VERSION,
-                              "nondex-common-" + ConfigurationDefaults.VERSION + ".jar");
+        String result = outPath + File.pathSeparator + Paths.get(mvnLoc.toString(), 
+            "repository", "edu", "illinois", "nondex-common", ConfigurationDefaults.VERSION,
+            "nondex-common-" + ConfigurationDefaults.VERSION + ".jar");
         return result;
     }
 
