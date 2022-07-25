@@ -15,7 +15,7 @@ Usage:
             mavenLocal()
         }
         dependencies {
-            classpath "org.gradle:test-retry-gradle-plugin:1.5.0-dev.6.{ver}"
+            classpath "org.gradle:test-retry-gradle-plugin:{ver}"
         }
     }
 
