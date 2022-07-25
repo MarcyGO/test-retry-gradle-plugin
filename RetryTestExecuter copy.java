@@ -90,7 +90,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             e.printStackTrace();
         }
 
-        int maxRetries = this.numRuns;
+        int maxRetries = this.numRuns - 1; // cuz run a clean run outside the while loop
         int maxFailures = extension.getMaxFailures();
         boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
 
@@ -119,6 +119,11 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
         int retryCount = 0;
         JvmTestExecutionSpec testExecutionSpec = spec;
+
+        CleanExecution cleanExec = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor, 
+            System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
+        System.out.println("run");
+        cleanExec.run();
 
         while (true) {
             Logger.getGlobal().log(Level.INFO, "retryCount = " + retryCount);
