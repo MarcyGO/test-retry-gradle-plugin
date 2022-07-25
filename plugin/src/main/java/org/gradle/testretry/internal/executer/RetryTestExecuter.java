@@ -82,7 +82,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
         String outPath = System.getProperty("user.dir")+ File.separator
-            + ConfigurationDefaults.PROPERTY_NONDEX_JAR_DIR + File.separator
+            + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR + File.separator
             + ConfigurationDefaults.INSTRUMENTATION_JAR;
         try {
             Main.main(outPath);
@@ -199,7 +199,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     private String getPathToNondexJar() {
         // to do: use default name of instr jar; nondexjar should be get from configuration; instr jar should be in .nondex
         String outPath = System.getProperty("user.dir")+ File.separator
-            + ConfigurationDefaults.PROPERTY_NONDEX_JAR_DIR + File.separator
+            + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR + File.separator
             + ConfigurationDefaults.INSTRUMENTATION_JAR;
         DefaultMavenFileLocations loc = new DefaultMavenFileLocations();
         File mvnLoc = loc.getUserMavenDir();
