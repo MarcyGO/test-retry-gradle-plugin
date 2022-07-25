@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 750be90 (some working stuffs)
 package org.gradle.testretry.internal.executer;
 
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
