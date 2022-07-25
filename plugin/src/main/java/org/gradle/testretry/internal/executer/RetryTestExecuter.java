@@ -123,9 +123,17 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         int retryCount = 0;
         JvmTestExecutionSpec testExecutionSpec = spec;
 
+        CleanExecution cleanExec = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor,
+            System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
+        retryTestResultProcessor = cleanExec.run();
+        retryTestResultProcessor.reset(++retryCount == maxRetries);
+
         while (true) {
             Logger.getGlobal().log(Level.INFO, "retryCount = " + retryCount);
-            delegate.execute(testExecutionSpec, retryTestResultProcessor);
+            NonDexExecution execution = new NonDexExecution(computeIthSeed(retryCount - 1),
+                delegate, testExecutionSpec, retryTestResultProcessor,
+                System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
+            retryTestResultProcessor = execution.run();
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
 
@@ -210,6 +218,11 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             "nondex-common-" + ConfigurationDefaults.VERSION + ".jar");
         return result;
     }
+
+    /*
+     currently, no original argline. Don't have to deal with other argline in addition to nondex stuffs
+     the name of the below method may need to change to create spec or something else
+    */
 
     private List<String> setupArgline(int i) {
         String pathToNondex = getPathToNondexJar();
