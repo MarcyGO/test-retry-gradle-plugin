@@ -34,9 +34,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import edu.illinois.nondex.common.ConfigurationDefaults;
 import edu.illinois.nondex.common.Level;
@@ -140,9 +144,9 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
             this.executions.add(execution);
             retryTestResultProcessor = execution.run();
+            this.writeCurrentRunInfo(execution);
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
-            execution.setFailures(); // this in in NonDexExecution for maven plugin, inside execution.run()
             
             Stream<Map.Entry<String, Set<String>>> fail = result.failedTests.stream();
             System.out.println(fail);
@@ -158,6 +162,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
         }
+        this.writeCurrentRunInfo(cleanExec);
+        this.postProcessExecutions(cleanExec);
     }
 
     public void failWithNonRetriedTestsIfAny() {
@@ -252,5 +258,23 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     private int computeIthSeed(int ithSeed) {
         return Utils.computeIthSeed(ithSeed, false, this.seed); // hardcode rerun to false
+    }
+
+    private void postProcessExecutions(CleanExecution cleanExec) {
+        Collection<String> failedInClean = cleanExec.getConfiguration().getFailedTests();
+
+        for (NonDexExecution exec : this.executions) {
+            exec.getConfiguration().filterTests(failedInClean);
+        }
+    }
+
+    private void writeCurrentRunInfo(CleanExecution execution) {
+        try {
+            Files.write(this.executions.get(0).getConfiguration().getRunFilePath(),
+                        (execution.getConfiguration().executionId + String.format("%n")).getBytes(),
+                         StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException ex) {
+            Logger.getGlobal().log(Level.SEVERE, "Cannot write execution id to current run file", ex);
+        }
     }
 }
