@@ -1,6 +1,16 @@
+# publish new build to mavenLocal
+baseDir=$(pwd)
+projectBuild=/home/xinyuwu4/simple_project
 ./gradlew publishToMavenLocal > temp.log
+
 grep "BUILD SUCCESSFUL" temp.log
 if [ $? == 0 ]; then
+    ver=$(grep version temp.log | grep -o '[[:digit:]].*$')
+    original=$(grep "org.gradle:test-retry-gradle-plugin:" ${projectBuild}/build.gradle)
+    sed -i "s/${original}/    classpath \"org.gradle:test-retry-gradle-plugin:${ver}\"/" ${projectBuild}/build.gradle 
+
     cd /home/xinyuwu4/simple_project
     ./cht pass retry test
-fi
+fi 
+
+rm ${projectBuild}/temp.log
