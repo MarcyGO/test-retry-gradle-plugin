@@ -82,10 +82,14 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
         String outPath = System.getProperty("user.dir")+ File.separator
-            + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR + File.separator
-            + ConfigurationDefaults.INSTRUMENTATION_JAR;
+                + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR + File.separator
+                + ConfigurationDefaults.INSTRUMENTATION_JAR;
         try {
-            Main.main(outPath);
+            File fileForJar = Paths.get(System.getProperty("user.dir"), 
+                    ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR).toFile();
+            fileForJar.mkdirs();
+            Main.main(Paths.get(fileForJar.getAbsolutePath(),
+                    ConfigurationDefaults.INSTRUMENTATION_JAR).toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -212,14 +216,14 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     private List<String> setupArgline(int i) {
         String pathToNondex = getPathToNondexJar();
         List<String> arg = new ArrayList();
-        if (!Utils.checkJDKBefore8()) {
-            arg.add("--patch-module=java.base=" + pathToNondex);
-            arg.add("--add-exports=java.base/edu.illinois.nondex.common=ALL-UNNAMED");
-            arg.add("--add-exports=java.base/edu.illinois.nondex.shuffling=ALL-UNNAMED");
-        } else {
-            arg.add("-Xbootclasspath/p:" + pathToNondex);
-        }
-
+        // if (!Utils.checkJDKBefore8()) {
+        //     arg.add("--patch-module=java.base=" + pathToNondex);
+        //     arg.add("--add-exports=java.base/edu.illinois.nondex.common=ALL-UNNAMED");
+        //     arg.add("--add-exports=java.base/edu.illinois.nondex.shuffling=ALL-UNNAMED");
+        // } else {
+        //     arg.add("-Xbootclasspath/p:" + pathToNondex);
+        // }
+        arg.add("-Xbootclasspath/p:" + pathToNondex);
         // to do: use configuration
         arg.add("-D" + ConfigurationDefaults.PROPERTY_EXECUTION_ID + "=" + Utils.getFreshExecutionId());
         arg.add("-D" + ConfigurationDefaults.PROPERTY_SEED + "=" + this.computeIthSeed(i));
