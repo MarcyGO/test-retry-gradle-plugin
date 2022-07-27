@@ -32,8 +32,11 @@ import org.gradle.process.JavaForkOptions;
 import java.io.File;
 import java.util.Set;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.nio.file.Paths;
 
 import edu.illinois.nondex.common.ConfigurationDefaults;
@@ -55,6 +58,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     protected int seed;
 
     private RoundResult lastResult;
+
+    private List<NonDexExecution> executions = new LinkedList<>();
 
     public RetryTestExecuter(
         Test task,
@@ -134,9 +139,14 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             NonDexExecution execution = new NonDexExecution(computeIthSeed(retryCount - 1),
                 delegate, testExecutionSpec, retryTestResultProcessor,
                 System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
+            this.executions.add(execution);
             retryTestResultProcessor = execution.run();
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
+            execution.setFailures(); // this in in NonDexExecution for maven plugin, inside execution.run()
+            
+            Stream<Map.Entry<String, Set<String>>> fail = result.failedTests.stream();
+            System.out.println(fail);
 
             if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
                 // fall through to our doLast action to fail accordingly
