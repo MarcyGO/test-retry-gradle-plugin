@@ -51,6 +51,7 @@ public class CleanExecution {
         } else {
             Logger.getGlobal().log(Level.INFO, "Failed when running tests for " + this.configuration.executionId);
         }
+        this.setFailures();
         return this.testResultProcessor;
     }
 
