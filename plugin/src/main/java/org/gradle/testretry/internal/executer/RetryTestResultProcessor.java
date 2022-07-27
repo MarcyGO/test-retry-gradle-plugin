@@ -28,6 +28,8 @@ import org.gradle.testretry.internal.testsreader.TestsReader;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 
@@ -47,6 +49,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     private TestNames currentRoundFailedTests = new TestNames();
     private TestNames previousRoundFailedTests = new TestNames();
+    private Set<String> failingTests = new LinkedHashSet<>();
 
     private Object rootTestDescriptorId;
 
@@ -66,6 +69,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
+        System.out.println("started");
         if (rootTestDescriptorId == null) {
             rootTestDescriptorId = descriptor.getId();
             activeDescriptorsById.put(descriptor.getId(), descriptor);
@@ -78,6 +82,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
+        System.out.println("completed");
         if (testId.equals(rootTestDescriptorId)) {
             if (!lastRun()) {
                 return;
@@ -87,9 +92,11 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             if (descriptor != null && descriptor.getClassName() != null) {
                 String className = descriptor.getClassName();
                 String name = descriptor.getName();
+                // System.out.println("******" + className + " " + name);
 
                 boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
                 if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
+                    System.out.println("add failure");
                     currentRoundFailedTests.add(className, name);
                 }
 
@@ -124,6 +131,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void output(Object testId, TestOutputEvent testOutputEvent) {
+        System.out.println("output");
         delegate.output(testId, testOutputEvent);
     }
 
@@ -160,6 +168,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             String className = descriptor.getClassName();
             if (className != null) {
                 if (filter.canRetry(className)) {
+                    String name = descriptor.getName();
+                    System.out.println("add failure: " + className + " " + name);
+                    failingTests.add(className + "#" + name);
+
                     currentRoundFailedTests.add(className, descriptor.getName());
                 } else {
                     hasRetryFilteredFailures = true;
@@ -189,6 +201,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         this.previousRoundFailedTests = currentRoundFailedTests;
         this.currentRoundFailedTests = new TestNames();
         this.activeDescriptorsById.clear();
+    }
+
+    public Set<String> getFailingTests() {
+        return this.failingTests;
     }
 
 }

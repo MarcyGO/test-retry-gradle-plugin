@@ -8,6 +8,8 @@ import edu.illinois.nondex.common.Utils;
 import edu.illinois.nondex.common.Logger;
 import edu.illinois.nondex.common.Level;
 
+import java.util.Set;
+
 public class CleanExecution {
 
     protected Configuration configuration;
@@ -41,7 +43,7 @@ public class CleanExecution {
     }
 
     public RetryTestResultProcessor run() {
-        Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
+        // Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
         delegate.execute(this.originalSpec, this.testResultProcessor);
         RoundResult result = testResultProcessor.getResult();
         if (result.failedTests.isEmpty()) {
@@ -50,5 +52,10 @@ public class CleanExecution {
             Logger.getGlobal().log(Level.INFO, "Failed when running tests for " + this.configuration.executionId);
         }
         return this.testResultProcessor;
+    }
+
+    public void setFailures() {
+        Set<String> failingTests = this.testResultProcessor.getFailingTests();
+        this.configuration.setFailures(failingTests);
     }
 }
