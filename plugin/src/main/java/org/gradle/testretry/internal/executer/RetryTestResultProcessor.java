@@ -69,7 +69,6 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
-        System.out.println("started");
         if (rootTestDescriptorId == null) {
             rootTestDescriptorId = descriptor.getId();
             activeDescriptorsById.put(descriptor.getId(), descriptor);
@@ -82,7 +81,6 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
-        System.out.println("completed");
         if (testId.equals(rootTestDescriptorId)) {
             if (!lastRun()) {
                 return;
@@ -92,11 +90,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             if (descriptor != null && descriptor.getClassName() != null) {
                 String className = descriptor.getClassName();
                 String name = descriptor.getName();
-                // System.out.println("******" + className + " " + name);
 
                 boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
                 if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
-                    System.out.println("add failure");
                     currentRoundFailedTests.add(className, name);
                 }
 
@@ -131,7 +127,6 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void output(Object testId, TestOutputEvent testOutputEvent) {
-        System.out.println("output");
         delegate.output(testId, testOutputEvent);
     }
 
@@ -169,7 +164,6 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             if (className != null) {
                 if (filter.canRetry(className)) {
                     String name = descriptor.getName();
-                    System.out.println("add failure: " + className + " " + name);
                     failingTests.add(className + "#" + name);
 
                     currentRoundFailedTests.add(className, descriptor.getName());
