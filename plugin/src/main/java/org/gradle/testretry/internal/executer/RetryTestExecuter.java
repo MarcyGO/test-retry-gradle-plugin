@@ -162,7 +162,6 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         if (gradleVersionIsAtLeast("6.4")) {
             // This constructor is in Gradle 6.4+
             return new JvmTestExecutionSpec(
-                // retryTestFramework,
                 spec.getTestFramework(),
                 spec.getClasspath(),
                 spec.getModulePath(),
@@ -179,7 +178,6 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         } else {
             // This constructor is in Gradle 4.7+
             return new JvmTestExecutionSpec(
-                // retryTestFramework,
                 spec.getTestFramework(),
                 spec.getClasspath(),
                 spec.getCandidateClassFiles(),
