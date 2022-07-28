@@ -135,10 +135,12 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         CleanExecution cleanExec = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor,
             System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
         retryTestResultProcessor = cleanExec.run();
-        retryTestResultProcessor.reset(++retryCount == maxRetries);
 
         while (true) {
             Logger.getGlobal().log(Level.INFO, "retryCount = " + retryCount);
+            // update spec
+            testExecutionSpec = createRetryJvmExecutionSpec(retryCount, spec);
+            retryTestResultProcessor.reset(++retryCount == maxRetries);
             NonDexExecution execution = new NonDexExecution(computeIthSeed(retryCount - 1),
                 delegate, testExecutionSpec, retryTestResultProcessor,
                 System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
@@ -157,10 +159,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 break;
             } else if (result.lastRound) {
                 break;
-            } else {
-                testExecutionSpec = createRetryJvmExecutionSpec(retryCount, spec);
-                retryTestResultProcessor.reset(++retryCount == maxRetries);
-            }
+            } 
         }
         this.writeCurrentRunInfo(cleanExec);
         this.postProcessExecutions(cleanExec);

@@ -43,7 +43,7 @@ public class CleanExecution {
     }
 
     public RetryTestResultProcessor run() {
-        // Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
+        Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
         delegate.execute(this.originalSpec, this.testResultProcessor);
         RoundResult result = testResultProcessor.getResult();
         if (result.failedTests.isEmpty()) {
