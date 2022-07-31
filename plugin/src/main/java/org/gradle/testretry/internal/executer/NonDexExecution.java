@@ -24,7 +24,6 @@ public class NonDexExecution extends CleanExecution {
     private NonDexExecution(TestExecuter<JvmTestExecutionSpec> delegate, JvmTestExecutionSpec spec, 
             RetryTestResultProcessor testResultProcessor, String nondexDir) {
         super(delegate, spec, testResultProcessor, Utils.getFreshExecutionId(), nondexDir);
-        this.originalSpec = this.createRetryJvmExecutionSpec();
     }
 
     // this is called in RetryTestExecuter
@@ -36,6 +35,7 @@ public class NonDexExecution extends CleanExecution {
         this.configuration = new Configuration(ConfigurationDefaults.DEFAULT_MODE, seed, Pattern.compile(ConfigurationDefaults.DEFAULT_FILTER), 
             ConfigurationDefaults.DEFAULT_START, ConfigurationDefaults.DEFAULT_END, nondexDir, nondexDir, null,
             this.executionId, Logger.getGlobal().getLoggingLevel());
+        this.originalSpec = this.createRetryJvmExecutionSpec();
     }
 
     private JvmTestExecutionSpec createRetryJvmExecutionSpec() {
