@@ -138,10 +138,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
         while (true) {
             Logger.getGlobal().log(Level.INFO, "retryCount = " + retryCount);
-            // update spec
-            testExecutionSpec = createRetryJvmExecutionSpec(retryCount, spec);
             retryTestResultProcessor.reset(++retryCount == maxRetries);
-            NonDexExecution execution = new NonDexExecution(computeIthSeed(retryCount - 1),
+            NonDexExecution execution = new NonDexExecution(this.computeIthSeed(retryCount - 1),
                 delegate, testExecutionSpec, retryTestResultProcessor,
                 System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
             this.executions.add(execution);
@@ -178,81 +176,9 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         return lastResult != null && !lastResult.nonRetriedTests.isEmpty();
     }
 
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(int i, JvmTestExecutionSpec spec) {
-        JavaForkOptions option = spec.getJavaForkOptions();
-        List<String> arg = this.setupArgline(i);
-        option.setJvmArgs(arg);
-        if (gradleVersionIsAtLeast("6.4")) {
-            // This constructor is in Gradle 6.4+
-            return new JvmTestExecutionSpec(
-                spec.getTestFramework(),
-                spec.getClasspath(),
-                spec.getModulePath(),
-                spec.getCandidateClassFiles(),
-                spec.isScanForTestClasses(),
-                spec.getTestClassesDirs(),
-                spec.getPath(),
-                spec.getIdentityPath(),
-                spec.getForkEvery(),
-                option,
-                spec.getMaxParallelForks(),
-                spec.getPreviousFailedTestClasses()
-            );
-        } else {
-            // This constructor is in Gradle 4.7+
-            return new JvmTestExecutionSpec(
-                spec.getTestFramework(),
-                spec.getClasspath(),
-                spec.getCandidateClassFiles(),
-                spec.isScanForTestClasses(),
-                spec.getTestClassesDirs(),
-                spec.getPath(),
-                spec.getIdentityPath(),
-                spec.getForkEvery(),
-                option,
-                spec.getMaxParallelForks(),
-                spec.getPreviousFailedTestClasses()
-            );
-        }
-    }
-
     @Override
     public void stopNow() {
         delegate.stopNow();
-    }
-
-    private String getPathToNondexJar() {
-        // to do: use default name of instr jar; nondexjar should be get from configuration; instr jar should be in .nondex
-        String outPath = System.getProperty("user.dir")+ File.separator
-            + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR + File.separator
-            + ConfigurationDefaults.INSTRUMENTATION_JAR;
-        DefaultMavenFileLocations loc = new DefaultMavenFileLocations();
-        File mvnLoc = loc.getUserMavenDir();
-        String result = outPath + File.pathSeparator + Paths.get(mvnLoc.toString(), 
-            "repository", "edu", "illinois", "nondex-common", ConfigurationDefaults.VERSION,
-            "nondex-common-" + ConfigurationDefaults.VERSION + ".jar");
-        return result;
-    }
-
-    /*
-     currently, no original argline. Don't have to deal with other argline in addition to nondex stuffs
-     the name of the below method may need to change to create spec or something else
-    */
-
-    private List<String> setupArgline(int i) {
-        String pathToNondex = getPathToNondexJar();
-        List<String> arg = new ArrayList();
-        if (!Utils.checkJDKBefore8()) {
-            arg.add("--patch-module=java.base=" + pathToNondex);
-            arg.add("--add-exports=java.base/edu.illinois.nondex.common=ALL-UNNAMED");
-            arg.add("--add-exports=java.base/edu.illinois.nondex.shuffling=ALL-UNNAMED");
-        } else {
-            arg.add("-Xbootclasspath/p:" + pathToNondex);
-        }
-        // to do: use configuration
-        arg.add("-D" + ConfigurationDefaults.PROPERTY_EXECUTION_ID + "=" + Utils.getFreshExecutionId());
-        arg.add("-D" + ConfigurationDefaults.PROPERTY_SEED + "=" + this.computeIthSeed(i));
-        return arg;
     }
 
     private int computeIthSeed(int ithSeed) {
