@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 public class NonDexExecution extends CleanExecution {
-    // constructors
     private NonDexExecution(TestExecuter<JvmTestExecutionSpec> delegate, JvmTestExecutionSpec spec, 
             RetryTestResultProcessor testResultProcessor, String nondexDir) {
         super(delegate, spec, testResultProcessor, Utils.getFreshExecutionId(), nondexDir);
@@ -29,8 +28,8 @@ public class NonDexExecution extends CleanExecution {
     public NonDexExecution(int seed, TestExecuter<JvmTestExecutionSpec> delegate, JvmTestExecutionSpec originalSpec, 
             RetryTestResultProcessor testResultProcessor, String nondexDir) {
         this(delegate, originalSpec, testResultProcessor, nondexDir);
-        // temperarily put default values here
-        // eventually they comes in as parameters of the constructer, which are from argline properties
+        // temporarily put default values here
+        // eventually they come in as parameters of the constructer, which are from argline properties
         this.configuration = new Configuration(ConfigurationDefaults.DEFAULT_MODE, seed, Pattern.compile(ConfigurationDefaults.DEFAULT_FILTER), 
             ConfigurationDefaults.DEFAULT_START, ConfigurationDefaults.DEFAULT_END, nondexDir, nondexDir, null,
             this.executionId, Logger.getGlobal().getLoggingLevel());

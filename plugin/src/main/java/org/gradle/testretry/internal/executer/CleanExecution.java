@@ -38,17 +38,11 @@ public class CleanExecution {
         return this.configuration;
     }
 
-    protected void updateSpec() {
-        return;
-    }
-
     public RetryTestResultProcessor run() {
         Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
         delegate.execute(this.originalSpec, this.testResultProcessor);
         RoundResult result = testResultProcessor.getResult();
-        if (result.failedTests.isEmpty()) {
-            Logger.getGlobal().log(Level.INFO, "No test fail in this run");
-        } else {
+        if (!result.failedTests.isEmpty()) {
             Logger.getGlobal().log(Level.INFO, "Failed when running tests for " + this.configuration.executionId);
         }
         this.setFailures();
