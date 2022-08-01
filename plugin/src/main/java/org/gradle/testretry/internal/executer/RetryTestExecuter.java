@@ -95,8 +95,13 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         int retryCount = 0;
         JvmTestExecutionSpec testExecutionSpec = spec;
 
+        CleanExecution cleanExec = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor);
+        retryTestResultProcessor = cleanExec.run();
+
         while (true) {
-            delegate.execute(testExecutionSpec, retryTestResultProcessor);
+            retryTestResultProcessor.reset(++retryCount == maxRetries);
+            CleanExecution execution = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor);
+            retryTestResultProcessor = cleanExec.run();
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
 
@@ -104,17 +109,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 // fall through to our doLast action to fail accordingly
                 testTask.setIgnoreFailures(true);
                 break;
-            } else if (result.failedTests.isEmpty()) {
-                if (retryCount > 0 && !result.hasRetryFilteredFailures && !failOnPassedAfterRetry) {
-                    testTask.setIgnoreFailures(true);
-                }
-                break;
             } else if (result.lastRound) {
                 break;
-            } else {
-                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, result.failedTests);
-                testExecutionSpec = createRetryJvmExecutionSpec(spec, retryTestFramework);
-                retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
         }
     }
