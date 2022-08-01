@@ -25,19 +25,14 @@ import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
-import org.gradle.api.internal.artifacts.mvnsettings.DefaultMavenFileLocations;
-import org.gradle.process.JavaForkOptions;
 
 import java.io.File;
 import java.util.Set;
 import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.LinkedHashSet;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -51,8 +46,6 @@ import edu.illinois.nondex.common.Level;
 import edu.illinois.nondex.common.Logger;
 import edu.illinois.nondex.common.Utils;
 import edu.illinois.nondex.instr.Main;
-
-import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 

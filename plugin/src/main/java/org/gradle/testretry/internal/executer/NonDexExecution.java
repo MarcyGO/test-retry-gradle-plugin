@@ -14,7 +14,6 @@ import edu.illinois.nondex.common.Configuration;
 import edu.illinois.nondex.common.ConfigurationDefaults;
 import edu.illinois.nondex.common.Utils;
 import edu.illinois.nondex.common.Logger;
-import edu.illinois.nondex.common.Level;
 import java.util.regex.Pattern;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;

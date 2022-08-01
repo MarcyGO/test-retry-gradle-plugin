@@ -47,7 +47,7 @@ public class CleanExecution {
         delegate.execute(this.originalSpec, this.testResultProcessor);
         RoundResult result = testResultProcessor.getResult();
         if (result.failedTests.isEmpty()) {
-            System.out.println("no test fail in this run");
+            Logger.getGlobal().log(Level.INFO, "no test fail in this run");
         } else {
             Logger.getGlobal().log(Level.INFO, "Failed when running tests for " + this.configuration.executionId);
         }
