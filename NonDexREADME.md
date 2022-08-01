@@ -5,7 +5,7 @@ Usage:
     ```
     git clone https://github.com/MarcyGO/test-retry-gradle-plugin
     cd test-retry-gradle-plugin
-    git checkout nondex
+    git checkout nondex_printSummary
     ver=$(./gradlew publishToMavenLocal | grep version | grep -o '[[:digit:]].*$')
     echo $ver
     ```
