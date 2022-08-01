@@ -195,6 +195,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         this.previousRoundFailedTests = currentRoundFailedTests;
         this.currentRoundFailedTests = new TestNames();
         this.activeDescriptorsById.clear();
+        this.failingTests = new LinkedHashSet<>();
     }
 
     public Set<String> getFailingTests() {
