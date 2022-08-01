@@ -43,7 +43,8 @@ public class CleanExecution {
     }
 
     public RetryTestResultProcessor run() {
-        Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
+        // Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
+        Logger.getGlobal().log(Level.CONFIG, "new run");
         delegate.execute(this.originalSpec, this.testResultProcessor);
         RoundResult result = testResultProcessor.getResult();
         if (result.failedTests.isEmpty()) {
@@ -57,6 +58,7 @@ public class CleanExecution {
 
     public void setFailures() {
         Set<String> failingTests = this.testResultProcessor.getFailingTests();
+        Logger.getGlobal().log(Level.INFO, "setFailures in configuration:");
         this.configuration.setFailures(failingTests);
     }
 }

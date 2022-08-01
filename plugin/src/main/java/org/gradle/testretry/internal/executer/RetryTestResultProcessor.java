@@ -25,6 +25,9 @@ import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.RetryFilter;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 
+import edu.illinois.nondex.common.Logger;
+import edu.illinois.nondex.common.Level;
+
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -172,6 +175,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                 }
             }
         }
+        Logger.getGlobal().log(Level.INFO, "failures in this run:");
+        for (String test : failingTests) {
+            Logger.getGlobal().log(Level.INFO, test);
+        }
     }
 
     private boolean lastRun() {
@@ -195,6 +202,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         this.previousRoundFailedTests = currentRoundFailedTests;
         this.currentRoundFailedTests = new TestNames();
         this.activeDescriptorsById.clear();
+        this.failingTests = new LinkedHashSet<>();
     }
 
     public Set<String> getFailingTests() {
