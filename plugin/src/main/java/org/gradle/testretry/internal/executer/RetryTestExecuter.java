@@ -28,7 +28,10 @@ import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Set;
@@ -38,6 +41,8 @@ import java.util.stream.Collectors;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 import edu.illinois.nondex.common.ConfigurationDefaults;
+import edu.illinois.nondex.common.Level;
+import edu.illinois.nondex.common.Logger;
 import edu.illinois.nondex.common.Utils;
 import edu.illinois.nondex.instr.Main;
 
@@ -131,6 +136,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                     System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR);
             this.executions.add(execution);
             retryTestResultProcessor = execution.run();
+            this.writeCurrentRunInfo(execution);
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
 
@@ -142,6 +148,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 break;
             }
         }
+        this.writeCurrentRunInfo(cleanExec);
         this.postProcessExecutions(cleanExec);
     }
 
@@ -206,6 +213,16 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         Collection<String> failedInClean = cleanExec.getConfiguration().getFailedTests();
         for (NonDexExecution exec : this.executions) {
             exec.getConfiguration().filterTests(failedInClean);
+        }
+    }
+
+    private void writeCurrentRunInfo(CleanExecution execution) {
+        try {
+            Files.write(this.executions.get(0).getConfiguration().getRunFilePath(),
+                        (execution.getConfiguration().executionId + String.format("%n")).getBytes(),
+                        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException ex) {
+            Logger.getGlobal().log(Level.SEVERE, "Cannot write execution id to current run file", ex);
         }
     }
 }
