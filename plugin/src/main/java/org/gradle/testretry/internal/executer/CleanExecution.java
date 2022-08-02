@@ -33,6 +33,10 @@ public class CleanExecution {
         this(delegate, originalSpec, testResultProcessor, "clean_" + Utils.getFreshExecutionId(), nondexDir);
     }
 
+    public Configuration getConfiguration() {
+        return this.configuration;
+    }
+
     public RetryTestResultProcessor run() {
         Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
         this.delegate.execute(this.originalSpec, this.testResultProcessor);
@@ -40,7 +44,7 @@ public class CleanExecution {
         return this.testResultProcessor;
     }
 
-    public void setFailures() {
+    private void setFailures() {
         Set<String> failingTests = this.testResultProcessor.getFailingTests();
         this.configuration.setFailures(failingTests);
     }
