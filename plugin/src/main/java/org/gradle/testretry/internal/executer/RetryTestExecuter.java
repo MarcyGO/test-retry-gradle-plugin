@@ -28,10 +28,14 @@ import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
+
+import edu.illinois.nondex.common.ConfigurationDefaults;
+import edu.illinois.nondex.instr.Main;
 
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
@@ -65,6 +69,16 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
+        try {
+            File fileForJar = Paths.get(System.getProperty("user.dir"),
+                    ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR).toFile();
+            fileForJar.mkdirs();
+            Main.main(Paths.get(fileForJar.getAbsolutePath(),
+                    ConfigurationDefaults.INSTRUMENTATION_JAR).toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         int maxRetries = extension.getMaxRetries();
         int maxFailures = extension.getMaxFailures();
         boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
@@ -95,12 +109,14 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         int retryCount = 0;
         JvmTestExecutionSpec testExecutionSpec = spec;
 
-        CleanExecution cleanExec = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor);
+        CleanExecution cleanExec = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor,
+                System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
         retryTestResultProcessor = cleanExec.run();
 
         while (true) {
             retryTestResultProcessor.reset(++retryCount == maxRetries);
-            CleanExecution execution = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor);
+            CleanExecution execution = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor,
+                    System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
             retryTestResultProcessor = execution.run();
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
