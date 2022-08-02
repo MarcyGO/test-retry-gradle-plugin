@@ -47,6 +47,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     private RoundResult lastResult;
 
+    protected int seed;
+
     public RetryTestExecuter(
         Test task,
         TestRetryTaskExtensionAdapter extension,
@@ -56,6 +58,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         Set<File> testClassesDir,
         Set<File> resolvedClasspath
     ) {
+        this.seed = Integer.parseInt(System.getProperty(ConfigurationDefaults.PROPERTY_SEED, ConfigurationDefaults.DEFAULT_SEED_STR));
         this.extension = extension;
         this.delegate = delegate;
         this.testTask = task;
@@ -188,6 +191,6 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     }
 
     private int computeIthSeed(int ithSeed) {
-        return Utils.computeIthSeed(ithSeed, false, ConfigurationDefaults.DEFAULT_SEED);
+        return Utils.computeIthSeed(ithSeed, false, this.seed);
     }
 }
