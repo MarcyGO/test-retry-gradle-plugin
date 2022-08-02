@@ -28,10 +28,14 @@ import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
+
+import edu.illinois.nondex.common.ConfigurationDefaults;
+import edu.illinois.nondex.instr.Main;
 
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
@@ -65,6 +69,19 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
+        String outPath = System.getProperty("user.dir")+ File.separator
+                + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR + File.separator
+                + ConfigurationDefaults.INSTRUMENTATION_JAR;
+        try {
+            File fileForJar = Paths.get(System.getProperty("user.dir"), 
+                    ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR).toFile();
+            fileForJar.mkdirs();
+            Main.main(Paths.get(fileForJar.getAbsolutePath(),
+                    ConfigurationDefaults.INSTRUMENTATION_JAR).toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         int maxRetries = extension.getMaxRetries();
         int maxFailures = extension.getMaxFailures();
         boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
