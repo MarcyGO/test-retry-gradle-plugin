@@ -32,6 +32,9 @@ dependencies {
     val asmVersion = "9.2"
     plugin("org.ow2.asm:asm:${asmVersion}")
 
+    implementation("edu.illinois:nondex-common:1.1.3-SNAPSHOT")
+    implementation("edu.illinois:nondex-instrumentation:1.1.3-SNAPSHOT")
+
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
     testImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
