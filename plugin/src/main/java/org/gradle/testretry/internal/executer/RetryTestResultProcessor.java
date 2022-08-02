@@ -27,7 +27,9 @@ import org.gradle.testretry.internal.testsreader.TestsReader;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 
@@ -47,6 +49,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     private TestNames currentRoundFailedTests = new TestNames();
     private TestNames previousRoundFailedTests = new TestNames();
+    private Set<String> failingTests = new LinkedHashSet<>();
 
     private Object rootTestDescriptorId;
 
@@ -160,6 +163,8 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             String className = descriptor.getClassName();
             if (className != null) {
                 if (filter.canRetry(className)) {
+                    String name = descriptor.getName();
+                    failingTests.add(className + "#" + name);
                     currentRoundFailedTests.add(className, descriptor.getName());
                 } else {
                     hasRetryFilteredFailures = true;
@@ -189,6 +194,11 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         this.previousRoundFailedTests = currentRoundFailedTests;
         this.currentRoundFailedTests = new TestNames();
         this.activeDescriptorsById.clear();
+        this.failingTests = new LinkedHashSet<>();
+    }
+
+    public Set<String> getFailingTests() {
+        return this.failingTests;
     }
 
 }

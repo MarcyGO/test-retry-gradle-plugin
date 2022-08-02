@@ -3,6 +3,8 @@ package org.gradle.testretry.internal.executer;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 
+import java.util.Set;
+
 import edu.illinois.nondex.common.Configuration;
 import edu.illinois.nondex.common.Level;
 import edu.illinois.nondex.common.Logger;
@@ -34,6 +36,12 @@ public class CleanExecution {
     public RetryTestResultProcessor run() {
         Logger.getGlobal().log(Level.CONFIG, this.configuration.toString());
         this.delegate.execute(this.originalSpec, this.testResultProcessor);
+        this.setFailures();
         return this.testResultProcessor;
+    }
+
+    public void setFailures() {
+        Set<String> failingTests = this.testResultProcessor.getFailingTests();
+        this.configuration.setFailures(failingTests);
     }
 }
