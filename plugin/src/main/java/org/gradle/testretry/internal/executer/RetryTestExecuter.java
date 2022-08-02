@@ -29,7 +29,10 @@ import org.gradle.testretry.internal.filter.RetryFilter;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.LinkedList;
 import java.util.Set;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
@@ -49,6 +52,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     protected int seed;
     protected int numRuns;
+    private List<NonDexExecution> executions = new LinkedList<>();
 
     public RetryTestExecuter(
         Test task,
@@ -125,6 +129,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                     this.delegate, testExecutionSpec, retryTestResultProcessor,
                     System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR,
                     System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR);
+            this.executions.add(execution);
             retryTestResultProcessor = execution.run();
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
@@ -137,6 +142,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 break;
             }
         }
+        this.postProcessExecutions(cleanExec);
     }
 
     public void failWithNonRetriedTestsIfAny() {
@@ -194,5 +200,12 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     private int computeIthSeed(int ithSeed) {
         return Utils.computeIthSeed(ithSeed, false, this.seed);
+    }
+
+    private void postProcessExecutions(CleanExecution cleanExec) {
+        Collection<String> failedInClean = cleanExec.getConfiguration().getFailedTests();
+        for (NonDexExecution exec : this.executions) {
+            exec.getConfiguration().filterTests(failedInClean);
+        }
     }
 }
