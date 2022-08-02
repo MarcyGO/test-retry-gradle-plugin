@@ -48,6 +48,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     private RoundResult lastResult;
 
     protected int seed;
+    protected int numRuns;
 
     public RetryTestExecuter(
         Test task,
@@ -59,6 +60,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         Set<File> resolvedClasspath
     ) {
         this.seed = Integer.parseInt(System.getProperty(ConfigurationDefaults.PROPERTY_SEED, ConfigurationDefaults.DEFAULT_SEED_STR));
+        this.numRuns = Integer.parseInt(System.getProperty(ConfigurationDefaults.PROPERTY_NUM_RUNS, ConfigurationDefaults.DEFAULT_NUM_RUNS_STR));
         this.extension = extension;
         this.delegate = delegate;
         this.testTask = task;
@@ -83,7 +85,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             e.printStackTrace();
         }
 
-        int maxRetries = extension.getMaxRetries();
+        int maxRetries = this.numRuns;
         int maxFailures = extension.getMaxFailures();
         boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
 
