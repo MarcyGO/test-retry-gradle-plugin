@@ -319,7 +319,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             Logger.getGlobal().log(Level.INFO, "No Test Failed with this configuration.");
         }
         for (String test : failedTests) {
-            allFailures.add(test); // add elements in this input set? is it a reference?
+            allFailures.add(test);
             Logger.getGlobal().log(Level.WARNING, test);
         }
         Logger.getGlobal().log(Level.INFO, "*********");
