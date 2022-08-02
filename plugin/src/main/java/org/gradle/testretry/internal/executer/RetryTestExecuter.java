@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 import edu.illinois.nondex.common.ConfigurationDefaults;
+import edu.illinois.nondex.common.Utils;
 import edu.illinois.nondex.instr.Main;
 
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
@@ -115,8 +116,10 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
         while (true) {
             retryTestResultProcessor.reset(++retryCount == maxRetries);
-            CleanExecution execution = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor,
-                    System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR);
+            NonDexExecution execution = new NonDexExecution(this.computeIthSeed(retryCount - 1),
+                    this.delegate, testExecutionSpec, retryTestResultProcessor,
+                    System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_DIR,
+                    System.getProperty("user.dir")+ File.separator + ConfigurationDefaults.DEFAULT_NONDEX_JAR_DIR);
             retryTestResultProcessor = execution.run();
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
@@ -182,5 +185,9 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     @Override
     public void stopNow() {
         delegate.stopNow();
+    }
+
+    private int computeIthSeed(int ithSeed) {
+        return Utils.computeIthSeed(ithSeed, false, ConfigurationDefaults.DEFAULT_SEED);
     }
 }
