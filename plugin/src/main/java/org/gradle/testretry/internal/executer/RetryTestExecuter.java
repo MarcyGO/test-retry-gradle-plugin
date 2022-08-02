@@ -28,12 +28,15 @@ import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
 import java.util.LinkedList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -41,6 +44,7 @@ import java.util.stream.Collectors;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 import edu.illinois.nondex.common.ConfigurationDefaults;
+import edu.illinois.nondex.common.Configuration;
 import edu.illinois.nondex.common.Level;
 import edu.illinois.nondex.common.Logger;
 import edu.illinois.nondex.common.Utils;
@@ -150,6 +154,9 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         }
         this.writeCurrentRunInfo(cleanExec);
         this.postProcessExecutions(cleanExec);
+
+        Configuration config = this.executions.get(0).getConfiguration();
+        this.printSummary(cleanExec, config);
     }
 
     public void failWithNonRetriedTestsIfAny() {
@@ -224,5 +231,97 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         } catch (IOException ex) {
             Logger.getGlobal().log(Level.SEVERE, "Cannot write execution id to current run file", ex);
         }
+    }
+
+    private void printSummary(CleanExecution cleanExec, Configuration config) {
+        Set<String> allFailures = new LinkedHashSet<>();
+        Logger.getGlobal().log(Level.INFO, "NonDex SUMMARY:");
+        for (CleanExecution exec : this.executions) {
+            this.printExecutionResults(allFailures, exec);
+        }
+
+        if (!cleanExec.getConfiguration().getFailedTests().isEmpty()) {
+            Logger.getGlobal().log(Level.INFO, "Tests are failing without NonDex.");
+            this.printExecutionResults(allFailures, cleanExec);
+        }
+        allFailures.removeAll(cleanExec.getConfiguration().getFailedTests());
+
+        Logger.getGlobal().log(Level.INFO, "Across all seeds:");
+        for (String test : allFailures) {
+            Logger.getGlobal().log(Level.INFO, test);
+        }
+
+        this.generateHtml(allFailures, config);
+    }
+
+    private void generateHtml(Set<String> allFailures, Configuration config) {
+        String head = "<!DOCTYPE html>"
+                + "<html>"
+                + "<head>"
+                + "<title>Test Results</title>"
+                + "<style>"
+                + "table { border-collapse: collapse; width: 100%; }"
+                + "th { height: 50%; }"
+                + "th, td { padding: 10px; text-align: left; }"
+                + "tr:nth-child(even) {background-color:#f2f2f2;}"
+                + ".x { color: red; font-size: 150%;}"
+                + ".✓ { color: green; font-size: 150%;}"
+                + "</style>"
+                + "</head>";
+        String html = head + "<body>" + "<table>";
+
+        html += "<thead><tr>";
+        html += "<th>Test Name</th>";
+        for (int iter = 0; iter < this.executions.size(); iter++) {
+            html += "<th>";
+            html += "" + this.executions.get(iter).getConfiguration().seed;
+            html += "</th>";
+        }
+        html += "</tr></thead>";
+        html += "<tbody>";
+        for (String failure : allFailures) {
+            html += "<tr><td>" + failure + "</td>";
+            for (CleanExecution exec : this.executions) {
+                boolean testDidFail = false;
+                for (String test : exec.getConfiguration().getFailedTests()) {
+                    if (test.equals(failure)) {
+                        testDidFail = true;
+                    }
+                }
+                if (testDidFail) {
+                    html += "<td class=\"x\">&#10006;</td>";
+                } else {
+                    html += "<td class=\"✓\">&#10004;</td>";
+                }
+            }
+            html += "</tr>";
+        }
+        html += "</tbody></table></body></html>";
+
+        File nondexDir = config.getNondexDir().toFile();
+        File htmlFile = new File(nondexDir, "test_results.html");
+        try {
+            PrintWriter htmlPrinter = new PrintWriter(htmlFile);
+            htmlPrinter.print(html);
+            htmlPrinter.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getGlobal().log(Level.INFO, "File Missing.  But that shouldn't happen...");
+        }
+        Logger.getGlobal().log(Level.INFO, "Test results can be found at: ");
+        Logger.getGlobal().log(Level.INFO, "file://" + htmlFile.getPath());
+    }
+
+    private void printExecutionResults(Set<String> allFailures, CleanExecution exec) {
+        Logger.getGlobal().log(Level.INFO, "*********");
+        Logger.getGlobal().log(Level.INFO, "mvn nondex:nondex " + exec.getConfiguration().toArgLine());
+        Collection<String> failedTests = exec.getConfiguration().getFailedTests();
+        if (failedTests.isEmpty()) {
+            Logger.getGlobal().log(Level.INFO, "No Test Failed with this configuration.");
+        }
+        for (String test : failedTests) {
+            allFailures.add(test); // add elements in this input set? is it a reference?
+            Logger.getGlobal().log(Level.WARNING, test);
+        }
+        Logger.getGlobal().log(Level.INFO, "*********");
     }
 }
