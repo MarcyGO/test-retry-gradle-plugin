@@ -101,7 +101,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         while (true) {
             retryTestResultProcessor.reset(++retryCount == maxRetries);
             CleanExecution execution = new CleanExecution(this.delegate, testExecutionSpec, retryTestResultProcessor);
-            retryTestResultProcessor = cleanExec.run();
+            retryTestResultProcessor = execution.run();
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
 
