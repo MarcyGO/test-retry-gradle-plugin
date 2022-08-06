@@ -69,7 +69,7 @@ gradlePlugin {
             id = "org.gradle.test-retry"
             displayName = "Gradle test retry plugin"
             description = project.description
-            implementationClass = "org.gradle.testretry.TestRetryPlugin"
+            implementationClass = "org.gradle.plugin.TestRetryPlugin"
         }
     }
 }
