@@ -7,25 +7,14 @@ import org.gradle.testretry.internal.config.TestTaskConfigurer;
 import org.gradle.api.tasks.testing.Test;
 
 class NonDexTest extends Test {
-    static final String NAME = "nondexTest"
+    static final String NAME = "nondexTest-retry"
 
-    void init(ObjectFactory objectFactory, ProviderFactory providerFactory) {
+    void init() {
         setDescription("Test with NonDex")
         setGroup("NonDex")
 
         testLogging {
             exceptionFormat 'full'
-        }
-
-        doFirst {
-            System.out.println("doFirst")
-            TestTaskConfigurer.configureTestTask(this,  objectFactory, providerFactory)
-            // new TestTaskConfigurer.InitTaskAction(adapter, objectFactory)
-        }
-
-        doLast {
-            System.out.println("doLast")
-            TestTaskConfigurer.FinalizeTaskAction()
         }
     }
 }

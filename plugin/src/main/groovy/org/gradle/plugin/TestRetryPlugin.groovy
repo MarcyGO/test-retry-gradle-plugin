@@ -29,11 +29,9 @@ public class TestRetryPlugin implements Plugin<Project> {
             return;
         }
 
-        project.getTasks()
-            .withType(Test.class)
-            .configureEach(task -> configureTestTask(task, objectFactory, providerFactory));
-
-        project.getTasks().create(NonDexTest.NAME, NonDexTest).init(this.objectFactory, this.providerFactory);
+        Test nondex = project.tasks.create(NonDexTest.NAME, NonDexTest);
+        nondex.init();
+        configureTestTask(nondex, objectFactory, providerFactory);
     }
 
     private static boolean pluginAlreadyApplied(Project project) {
