@@ -22,6 +22,8 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.Test;
 
+import org.gradle.util.VersionNumber;
+
 import javax.inject.Inject;
 
 import static org.gradle.testretry.internal.config.TestTaskConfigurer.configureTestTask;

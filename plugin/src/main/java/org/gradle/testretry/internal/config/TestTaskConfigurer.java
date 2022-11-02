@@ -27,7 +27,7 @@ import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.TestRetryTaskExtension;
-import org.gradle.testretry.internal.executer.RetryTestExecuter;
+import edu.illinois.nondex.gradle.plugin.NondexTestExecuter;
 import org.gradle.util.VersionNumber;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,16 +46,17 @@ public final class TestTaskConfigurer {
 
         TestRetryTaskExtensionAdapter adapter = new TestRetryTaskExtensionAdapter(providerFactory, extension, gradleVersion);
 
-        test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
+        // test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
-        Provider<Boolean> isDeactivatedByTestDistributionPlugin =
-            shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory, gradleVersion);
-        test.getInputs().property("isDeactivatedByTestDistributionPlugin", isDeactivatedByTestDistributionPlugin);
+        // Provider<Boolean> isDeactivatedByTestDistributionPlugin =
+        //     shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory, gradleVersion);
+        // test.getInputs().property("isDeactivatedByTestDistributionPlugin", isDeactivatedByTestDistributionPlugin);
 
-        test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
+        // test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
 
-        test.doFirst(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new InitTaskAction(adapter, objectFactory)));
-        test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction()));
+        // test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter, objectFactory)));
+        // test.doLast(new ConditionalTaskAction(new FinalizeTaskAction()));
+        test.doFirst(new InitTaskAction(adapter, objectFactory));
     }
 
     private static Provider<Boolean> shouldTestRetryPluginBeDeactivated(
@@ -97,10 +98,10 @@ public final class TestTaskConfigurer {
         }
     }
 
-    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
+    private static NondexTestExecuter createNondexTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
-        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory, task.getTestClassesDirs().getFiles(), task.getClasspath().getFiles());
+        return new NondexTestExecuter(task, extension, delegate, instantiator, objectFactory, task.getTestClassesDirs().getFiles(), task.getClasspath().getFiles());
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
@@ -113,21 +114,22 @@ public final class TestTaskConfigurer {
 
     private static class ConditionalTaskAction implements Action<Task> {
 
-        private final Provider<Boolean> isDeactivatedByTestDistributionPlugin;
+        // private final Provider<Boolean> isDeactivatedByTestDistributionPlugin;
         private final Action<Test> delegate;
 
-        public ConditionalTaskAction(Provider<Boolean> isDeactivatedByTestDistributionPlugin, Action<Test> delegate) {
-            this.isDeactivatedByTestDistributionPlugin = isDeactivatedByTestDistributionPlugin;
+        public ConditionalTaskAction(Action<Test> delegate) {
+            // this.isDeactivatedByTestDistributionPlugin = isDeactivatedByTestDistributionPlugin;
             this.delegate = delegate;
         }
 
         @Override
         public void execute(@NotNull Task task) {
-            if (isDeactivatedByTestDistributionPlugin.get()) {
-                task.getLogger().info("Test execution via the test-retry plugin is deactivated. Retries are handled by the test-distribution plugin.");
-            } else {
-                delegate.execute((Test) task);
-            }
+            // if (isDeactivatedByTestDistributionPlugin.get()) {
+            //     task.getLogger().info("Test execution via the test-retry plugin is deactivated. Retries are handled by the test-distribution plugin.");
+            // } else {
+            //     delegate.execute((Test) task);
+            // }
+            delegate.execute((Test) task);
         }
     }
 
@@ -156,7 +158,7 @@ public final class TestTaskConfigurer {
 
         @Override
         public void execute(@NotNull Test task) {
-            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter, objectFactory);
+            RetryTestExecuter retryTestExecuter = createNondexTestExecuter(task, adapter, objectFactory);
             setTestExecuter(task, retryTestExecuter);
         }
     }
